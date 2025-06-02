@@ -1,88 +1,92 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import users from '../../api/users';
-import { Todo } from '../../types/Todo';
 import { getUserById } from '../../services/user';
+import { Todo } from '../../types/Todo';
 
-interface Props {
-  onSubmit: (todo: Todo) => void;
+interface TodoFormProps {
+  onAdd: (todo: Todo) => void;
 }
 
-export const TodoForm: React.FC<Props> = ({ onSubmit }) => {
+export const TodoForm: React.FC<TodoFormProps> = ({ onAdd }) => {
   const [title, setTitle] = useState('');
-  const [hasErrorTitle, setHasErrorTitle] = useState(false);
+  const [hasTitleError, setHasTitleError] = useState(false);
 
   const [userId, setUserId] = useState(0);
-  const [hasErrorUserId, setHasErrorUserId] = useState(false);
+  const [hasUserIdError, setHasUserIdError] = useState(false);
 
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(event.target.value);
-    setHasErrorTitle(false);
+    setHasTitleError(false);
   };
 
-  const handleUserIdChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setUserId(+event.target.value);
-    setHasErrorUserId(false);
+    setHasUserIdError(false);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const reset = () => {
+    setTitle('');
+    setUserId(0);
+  };
+
+  const handleAdd = (event: React.FormEvent) => {
     event.preventDefault();
 
-    setHasErrorTitle(!title);
-    setHasErrorUserId(!userId);
+    setHasTitleError(!title);
+    setHasUserIdError(!userId);
 
     if (!title || !userId) {
       return;
     }
 
-    onSubmit({
+    onAdd({
       id: 0,
-      user: getUserById(userId),
       title,
       userId,
       completed: false,
+      user: getUserById(userId),
     });
 
-    setTitle('');
-    setUserId(0);
+    reset();
   };
 
   return (
-    <form action="/api/todos" method="POST" onSubmit={handleSubmit}>
+    <form action="/api/todos" method="POST" onSubmit={handleAdd}>
       <div className="field">
-        <label htmlFor="title">Title:</label>
+        <label htmlFor="todo-title">Title:&nbsp;</label>
         <input
-          id="title"
           type="text"
+          id="todo-title"
+          placeholder="Enter a title"
           data-cy="titleInput"
-          placeholder="Enter the title"
           value={title}
           onChange={handleTitleChange}
+          onBlur={() => setHasTitleError(!title)}
         />
-        {hasErrorTitle && <span className="error">Please enter a title</span>}
+        {hasTitleError && <span className="error">Please enter a title</span>}
       </div>
 
       <div className="field">
-        <label htmlFor="user">User:</label>
+        <label htmlFor="user-id">User:&nbsp;</label>
+
         <select
-          id="user"
+          id="user-id"
           data-cy="userSelect"
+          required
           value={userId}
-          onChange={handleUserIdChange}
+          onChange={handleUserChange}
         >
           <option value="0" disabled>
             Choose a user
           </option>
 
-          {users.map(user => {
-            return (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-            );
-          })}
+          {users.map(user => (
+            <option key={user.id} value={user.id}>
+              {user.name}
+            </option>
+          ))}
         </select>
-
-        {hasErrorUserId && <span className="error">Please choose a user</span>}
+        {hasUserIdError && <span className="error">Please choose a user</span>}
       </div>
 
       <button type="submit" data-cy="submitButton">
